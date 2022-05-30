@@ -1,0 +1,17 @@
+{
+    "env": {
+        "API_URL": "http://localhost:3000/",
+        "API_NAME": "gallery",
+        "API_VERSION": "1.0.0",
+        "API_PORT": 3000,
+
+        "DATABASE_DRIVER": "mongodb",
+        "DATABASE_HOST": "localhost",
+        "DATABASE_NAME": "gallery",
+        "DATABASE_PORT": 27017,
+
+        "PASSWORD_HASH_SALT": 10,
+
+        "JWT_KEY": "secret"
+    }
+}
