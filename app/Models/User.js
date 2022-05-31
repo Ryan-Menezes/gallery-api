@@ -4,25 +4,24 @@ const Schema = mongoose.Schema
 const UserSchema = new Schema({
     first_name: {
         type: String,
-        maxlength: [100, 'The first_name must contain a maximum of 100 digits']
+        required: [true, 'The field first_name is required']
     },
     last_name: {
         type: String,
-        maxlength: [100, 'The last_name must contain a maximum of 100 digits']
+        required: [true, 'The field last_name is required']
     },
     email: {
         type: String,
-        maxlength: [100, 'The email must contain a maximum of 100 digits'],
-        unique: [true, 'This email is already being used'],
-        email: [true, 'Email must be a valid email']
+        required: [true, 'The field email is required'],
+        unique: [true, 'This email is already being used']
     },
     password: {
         type: String,
-        min: [8, 'The password must contain at least 8 digits'],
-        max: [100, 'The password must contain a maximum of 8 digits']
+        required: [true, 'The field password is required'],
+        minlength: [8, 'The password must contain at least 8 digits']
     },
     avatar: {
-        type: mongoose.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'medias',
         default: null
     },

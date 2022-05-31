@@ -1,22 +1,31 @@
 // Dependencies Global
-const path = require('path')
 const express = require('express')
+const morgan = require('morgan')
+const path = require('path')
+const fs = require('fs')
 const mongoose = require('mongoose')
 
 // Dependencies Local
-const config = {
-    database:           require('./config/database'),
-    httpResponses:      require('./config/http-responses')
-}
+const config = {}
+fs.readdirSync(path.join(__dirname, 'config')).forEach(file => {
+    const name = file.replace(/\..*/ig, '')
+
+    config[name] = require(`./config/${file}`)
+})
+
+// Generate directories
+fs.mkdir(path.join(__dirname, config.storage.upload.destination, config.storage.pathMedias), (error) => {})
 
 // Instances
 const app = express()
 
 // Settings Global
+app.use(morgan('dev'))
 app.use(express.json())
 app.use(express.urlencoded({
     extended: true
 }))
+app.use(express.static(path.join(__dirname, config.storage.upload.destination)))
 
 // Database connect
 mongoose.Promise = global.Promise
@@ -27,12 +36,16 @@ mongoose.connect(`mongodb://${config.database.mongodb.host}:${config.database.mo
 // Middlewares
 app.use(async (req, res, next) => {
     req.config = config
-
     next()
 })
+app.use(require('./app/Middlewares/auth').default)
 
 // Routes
-app.use('/users', require('./routes/users'))
+fs.readdirSync(path.join(__dirname, 'routes')).forEach(file => {
+    const endpoint = file.replace(/\..*/ig, '')
+
+    app.use(`/${endpoint}`, require(`./routes/${file}`))
+})
 
 // -- Routes Errors
 app.use(async (req, res, next) => {
@@ -42,12 +55,14 @@ app.use(async (req, res, next) => {
 })
 
 app.use(async (error, req, res, next) => {
-    const status = error.httpStatusCode ?? 500
-    const message = error.message ?? config.httpResponses.status[status]
-    
+    const status = error.httpStatusCode || 500
+    const message = error.message || config['http-responses'].status[status]
+    const errors = error.httpErrors || []
+
     res.status(status).json({
         status,
-        message
+        message,
+        errors
     })
 })
 
