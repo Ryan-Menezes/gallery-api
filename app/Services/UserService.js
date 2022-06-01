@@ -29,7 +29,9 @@ module.exports = {
                 },
                 deleted_at: null
             }, {
-                password: false
+                password: false,
+                deleted_at: false,
+                __v: false
             }).populate('avatar').skip(skip).limit(limit).lean()
 
             const status = users.length ? 200 : 204
@@ -57,7 +59,9 @@ module.exports = {
                 _id: id,
                 deleted_at: null
             }, {
-                password: false
+                password: false,
+                deleted_at: false,
+                __v: false
             }).populate('avatar').lean()
             .then(user => {
                 if(!user){
@@ -133,6 +137,7 @@ module.exports = {
                 const message = req.config['http-responses'].status[status]
 
                 delete user.password
+                delete user.deleted_at
 
                 res.setHeader('Location', `${req.config.app.url}${endpoint}${response._id}`)
                 res.status(status).json({
@@ -174,7 +179,9 @@ module.exports = {
                 _id: id,
                 deleted_at: null
             }, {
-                password: false
+                password: false,
+                deleted_at: false,
+                __v: false
             }).populate('avatar').lean()
             .then(async user => {
                 if(!user){
@@ -268,7 +275,9 @@ module.exports = {
                 _id: id,
                 deleted_at: null
             }, {
-                password: false
+                password: false,
+                deleted_at: false,
+                __v: false
             }).populate('avatar').lean()
             .then(async user => {
                 if(!user){

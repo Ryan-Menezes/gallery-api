@@ -27,7 +27,8 @@ module.exports = {
                     $options: 'i'
                 }
             }, {
-                medias: false
+                medias: false,
+                __v: false
             }).skip(skip).limit(limit).lean()
 
             const status = galleries.length ? 200 : 204
@@ -51,7 +52,8 @@ module.exports = {
             Gallery.findOne({
                 slug
             }, {
-                medias: false
+                medias: false,
+                __v: false
             }).lean()
             .then(gallery => {
                 if(!gallery){
@@ -119,7 +121,8 @@ module.exports = {
             Gallery.findOne({
                 slug
             }, {
-                medias: false
+                medias: false,
+                __v: false
             }).lean()
             .then(async gallery => {
                 if(!gallery){
@@ -168,7 +171,8 @@ module.exports = {
             Gallery.findOne({
                 slug
             }, {
-                medias: false
+                medias: false,
+                __v: false
             }).lean()
             .then(async gallery => {
                 if(!gallery){
@@ -208,11 +212,14 @@ module.exports = {
         try{
             Gallery.findOne({
                 slug
+            }, {
+                __v: false
             }).populate('medias').lean()
             .then(gallery => {
                 if(!gallery){
                     const error = new Error()
                     error.httpStatusCode = 404
+                    error.message = 'Gallery Not Found'
                     return next(error)
                 }
 
@@ -222,7 +229,7 @@ module.exports = {
                 res.status(status).json({
                     status,
                     message,
-                    total: images.length,
+                    total: gallery.medias.length,
                     images: gallery.medias.map(media => {
                         media.url = `${req.config.app.url}${req.config.storage.pathMedias}/${media.filename}`
                         return media
@@ -231,7 +238,7 @@ module.exports = {
             })
             .catch(error => {
                 error.httpStatusCode = 404
-                error.message = 'Not Found'
+                error.message = 'Gallery Not Found'
                 next(error)
             })
         }catch(error){
@@ -253,11 +260,14 @@ module.exports = {
 
             Gallery.findOne({
                 slug
+            }, {
+                __v: false
             }).lean()
             .then(async gallery => {
                 if(!gallery){
                     const error = new Error()
                     error.httpStatusCode = 404
+                    error.message = 'Gallery Not Found'
                     return next(error)
                 }
 
@@ -302,7 +312,7 @@ module.exports = {
                 (async () => await storage.remove(file.filename))()
 
                 error.httpStatusCode = 404
-                error.message = 'Not Found'
+                error.message = 'Gallery Not Found'
                 next(error)
             })
         }catch(error){
@@ -319,11 +329,14 @@ module.exports = {
         try{
             Media.findOne({
                 _id: id
+            }, {
+                __v: false
             }).lean()
             .then(media => {
                 if(!media){
                     const error = new Error()
                     error.httpStatusCode = 404
+                    error.message = 'Gallery Not Found'
                     return next(error)
                 }
 
@@ -346,7 +359,7 @@ module.exports = {
             })
             .catch(error => {
                 error.httpStatusCode = 404
-                error.message = 'Not Found'
+                error.message = 'Gallery Not Found'
                 next(error)
             })
         }catch(error){

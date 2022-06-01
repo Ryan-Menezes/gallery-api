@@ -7,13 +7,13 @@ const endpoint = 'auth/'
 module.exports = {
     validate: async (req, res, next) => {
         try{
-            const data = req.body
+            const query = req.query
 
             User.findOne({
-                email: data.email
+                email: query.email
             }).lean()
             .then(async user => {
-                const result = await bcrypt.compareSync(data.password, user.password)
+                const result = await bcrypt.compareSync(query.password, user.password)
 
                 if(!result){
                     const error = new Error('Invalid email or password')
