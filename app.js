@@ -38,13 +38,14 @@ app.use(async (req, res, next) => {
     req.config = config
     next()
 })
-app.use(require('./app/Middlewares/auth').default)
 
 // Routes
 fs.readdirSync(path.join(__dirname, 'routes')).forEach(file => {
-    const endpoint = file.replace(/\..*/ig, '')
+    if(file !== '.' && file !== '..'){
+        const endpoint = file.replace(/\..*/ig, '')
 
-    app.use(`/${endpoint}`, require(`./routes/${file}`))
+        app.use(`/${endpoint}`, require(`./routes/${file}`))
+    }
 })
 
 // -- Routes Errors

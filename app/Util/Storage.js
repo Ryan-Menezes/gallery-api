@@ -7,14 +7,13 @@ const storage = require('../../config/storage')
 module.exports = class Storage{
     constructor(){
         this.upload = null
-
-        const destination = path.join(__dirname, '..', '..', storage.upload.destination, storage.pathMedias)
+        this.destination = path.join(__dirname, '..', '..', storage.upload.destination, storage.pathMedias)
 
         this.upload = multer({
-            dist: destination,
+            dist: this.destination,
             storage: multer.diskStorage({
                 destination: (req, file, cb) => {
-                    cb(null, destination)
+                    cb(null, this.destination)
                 },
                 filename: (req, file, cb) => {
                     const date = new Date()
@@ -37,5 +36,9 @@ module.exports = class Storage{
 
     single(fieldname){
         return this.upload.single(fieldname)
+    }
+
+    remove(filename){
+        return fs.unlinkSync(this.destination + '/' + filename)
     }
 }

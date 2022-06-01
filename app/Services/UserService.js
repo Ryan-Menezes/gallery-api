@@ -1,17 +1,17 @@
 const bcrypt = require('bcryptjs')
 
-const User = require('../Models/User')
-const Media = require('../Models/Media')
-const Error = require('../Util/Error')
+const { User, Media } = require('../Models/index')
+const ErrorUtil = require('../Util/Error')
+const StorageUtil = require('../Util/Storage')
 
 const endpoint = 'users/'
 
 module.exports = {
     index: async (req, res, next) => {
-        try{
-            const skip = req.query.skip || req.config.paginate.skip
-            const limit = req.query.limit || req.config.paginate.limit
+        const skip = req.query.skip || req.config.paginate.skip
+        const limit = req.query.limit || req.config.paginate.limit
 
+        try{
             const users = await User.find({
                 deleted_at: null
             }, {
@@ -35,9 +35,9 @@ module.exports = {
     },
 
     show: async (req, res, next) => {
-        try{
-            const id = req.params.id
+        const id = req.params.id
 
+        try{
             User.findOne({
                 _id: id,
                 deleted_at: null
@@ -48,7 +48,7 @@ module.exports = {
                 if(!user){
                     const error = new Error()
                     error.httpStatusCode = 404
-                    next(error)
+                    return next(error)
                 }
 
                 user.avatar = user.avatar ? `${req.config.app.url}${req.config.storage.pathMedias}/${user.avatar.filename}` : null
@@ -73,17 +73,20 @@ module.exports = {
     },
 
     store: async (req, res, next) => {
-        try{
-            const data = req.body
-            const file = req.file
-            let media = null
-            let user = null
+        const storage = new StorageUtil()
+        const data = req.body
+        const file = req.file
+        let media = null
+        let user = null
 
+        try{
+            // If password is valid, hash password
             if(data.password && data.password.length >= 8){
                 const salt = await bcrypt.genSaltSync(Number(req.config.password.hash.salt))
                 data.password = await bcrypt.hashSync(data.password, salt)
             }
 
+            // verify if exists file to avatar
             if(file){
                 media = new Media({
                     filename: file.filename,
@@ -108,6 +111,7 @@ module.exports = {
                 })
             }
 
+            // Save new user
             user.save()
             .then(response => {
                 const status = 201
@@ -123,79 +127,34 @@ module.exports = {
                 })
             })
             .catch(error => {
+                if(file){
+                    Media.deleteOne({
+                        _id: media._id
+                    })
+                    .then(async response => {
+                        await storage.remove(media.filename)
+                    })
+                }
+
                 error.httpStatusCode = 400
-                error.httpErrors = Error.parse(error)
+                error.httpErrors = ErrorUtil.parse(error)
                 next(error)
             })
         }catch(error){
+            (async () => await storage.remove(media.filename))()
+
             next(error)
         }
     },
 
     update: async (req, res, next) => {
+        const storage = new StorageUtil()
+        const id = req.params.id
+        const data = req.body
+        const file = req.file
+        let media = null
+
         try{
-            const id = req.params.id
-            const data = req.body
-
-            User.findOne({
-                _id: id,
-                deleted_at: null
-            }, {
-                password: false
-            }).lean()
-            .then(async user => {
-                if(!user){
-                    const error = new Error()
-                    error.httpStatusCode = 404
-                    next(error)
-                }
-
-                user.avatar = user.avatar ? `${req.config.app.url}${req.config.storage.pathMedias}/${user.avatar.filename}` : null
-    
-                if(data.password && data.password.length >= 8){
-                    const salt = await bcrypt.genSaltSync(Number(req.config.password.hash.salt))
-                    data.password = await bcrypt.hashSync(data.password, salt)
-                }
-    
-                User.updateOne({
-                    _id: user._id
-                }, {
-                    first_name:     data.first_name || user.first_name,
-                    last_name:      data.last_name  || user.last_name,
-                    email:          data.email      || user.email,
-                    password:       data.password   || user.password
-                })
-                .then(response => {
-                    const status = 200
-                    const message = req.config['http-responses'].status[status]
-    
-                    res.status(status).json({
-                        status,
-                        message,
-                        response: response
-                    })
-                })
-                .catch(error => {
-                    error.httpStatusCode = 400
-                    error.httpErrors = Error.parse(error)
-                    next(error)
-                })
-            })
-            .catch(error => {
-                error.httpStatusCode = 404
-                error.message = 'Not Found'
-                next(error)
-            })
-        }catch(error){
-            next(error)
-        }
-    },
-
-    delete: async (req, res, next) => {
-        try{
-            const id = req.params.id
-            const data = req.body
-
             User.findOne({
                 _id: id,
                 deleted_at: null
@@ -206,11 +165,104 @@ module.exports = {
                 if(!user){
                     const error = new Error()
                     error.httpStatusCode = 404
-                    next(error)
+                    return next(error)
                 }
 
-                user.avatar = user.avatar ? `${req.config.app.url}${req.config.storage.pathMedias}/${user.avatar.filename}` : null
+                const filePrevious = user.avatar.filename
 
+                // verify if exists file to avatar
+                if(file){
+                    media = new Media({
+                        filename: file.filename,
+                        mimetype: file.mimetype
+                    })
+
+                    await media.save()
+                    data.avatar = media._id
+                }
+    
+                if(data.password && data.password.length >= 8){
+                    const salt = await bcrypt.genSaltSync(Number(req.config.password.hash.salt))
+                    data.password = await bcrypt.hashSync(data.password, salt)
+                }
+                
+                // Update user
+                User.updateOne({
+                    _id: user._id
+                }, {
+                    first_name:     data.first_name || user.first_name,
+                    last_name:      data.last_name  || user.last_name,
+                    email:          data.email      || user.email,
+                    password:       data.password   || user.password,
+                    avatar:         data.avatar     || user.avatar._id
+                })
+                .then(async response => {
+                    if(file && filePrevious){
+                        await storage.remove(filePrevious)
+                    }
+
+                    const status = 200
+                    const message = req.config['http-responses'].status[status]
+                    
+                    res.status(status).json({
+                        status,
+                        message,
+                        response: response
+                    })
+                })
+                .catch(error => {
+                    if(file){
+                        Media.deleteOne({
+                            _id: media._id
+                        })
+                        .then(async response => {
+                            await storage.remove(media.filename)
+                        })
+                    }
+
+                    error.httpStatusCode = 400
+                    error.httpErrors = ErrorUtil.parse(error)
+                    next(error)
+                })
+            })
+            .catch(error => {
+                if(file){
+                    (async () => await storage.remove(file.filename))()
+                }
+
+                error.httpStatusCode = 404
+                error.message = 'Not Found'
+                next(error)
+            })
+        }catch(error){
+            if(file){
+                (async () => await storage.remove(file.filename))()
+            }
+
+            next(error)
+        }
+    },
+
+    delete: async (req, res, next) => {
+        const storage = new StorageUtil()
+        const id = req.params.id
+        const data = req.body
+
+        try{
+            User.findOne({
+                _id: id,
+                deleted_at: null
+            }, {
+                password: false
+            }).populate('avatar').lean()
+            .then(async user => {
+                if(!user){
+                    const error = new Error()
+                    error.httpStatusCode = 404
+                    return next(error)
+                }
+
+                // Verify if is softdelete
                 if(!data.force){
                     User.updateOne({
                         _id: user._id
@@ -218,8 +270,6 @@ module.exports = {
                         deleted_at: Date.now()
                     })
                     .then(async response => {
-                        //await fs.unlinkSync()
-
                         const status = 200
                         const message = req.config['http-responses'].status[status]
 
@@ -234,10 +284,19 @@ module.exports = {
                     User.deleteOne({
                         _id: user._id
                     })
-                    .then(response => {
+                    .then(async response => {
+                        await Media.deleteOne({
+                            _id: user.avatar._id
+                        })
+                        
+                        // Remove file avatar
+                        await storage.remove(user.avatar.filename)
+
+                        // Response
                         const status = 200
                         const message = req.config['http-responses'].status[status]
 
+                        user.avatar = user.avatar ? `${req.config.app.url}${req.config.storage.pathMedias}/${user.avatar.filename}` : null
                         res.status(status).json({
                             status,
                             message,
