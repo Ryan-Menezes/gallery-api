@@ -7,11 +7,26 @@ const endpoint = 'galleries/'
 
 module.exports = {
     index: async (req, res, next) => {
-        const skip = req.query.skip || req.config.paginate.skip
-        const limit = req.query.limit || req.config.paginate.limit
+        const query = req.query
+        const skip = query.skip || req.config.paginate.skip
+        const limit = query.limit || req.config.paginate.limit
 
         try{
-            const galleries = await Gallery.find({}, {
+            const total = await Gallery.count()
+            const galleries = await Gallery.find({
+                title: {
+                    $regex: query.title || '', 
+                    $options: 'i'
+                },
+                slug: {
+                    $regex: query.slug || '', 
+                    $options: 'i'
+                },
+                description: {
+                    $regex: query.description || '', 
+                    $options: 'i'
+                }
+            }, {
                 medias: false
             }).skip(skip).limit(limit).lean()
 
@@ -21,6 +36,7 @@ module.exports = {
             res.status(status).json({
                 status,
                 message,
+                total,
                 galleries
             })
         }catch(error){
@@ -206,6 +222,7 @@ module.exports = {
                 res.status(status).json({
                     status,
                     message,
+                    total: images.length,
                     images: gallery.medias.map(media => {
                         media.url = `${req.config.app.url}${req.config.storage.pathMedias}/${media.filename}`
                         return media

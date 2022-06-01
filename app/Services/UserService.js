@@ -8,11 +8,25 @@ const endpoint = 'users/'
 
 module.exports = {
     index: async (req, res, next) => {
-        const skip = req.query.skip || req.config.paginate.skip
-        const limit = req.query.limit || req.config.paginate.limit
+        const query = req.query
+        const skip = query.skip || req.config.paginate.skip
+        const limit = query.limit || req.config.paginate.limit
 
         try{
+            const total = await User.count()
             const users = await User.find({
+                first_name: {
+                    $regex: query.first_name || '', 
+                    $options: 'i'
+                },
+                last_name: {
+                    $regex: query.last_name || '', 
+                    $options: 'i'
+                },
+                email: {
+                    $regex: query.email || '', 
+                    $options: 'i'
+                },
                 deleted_at: null
             }, {
                 password: false
@@ -24,6 +38,7 @@ module.exports = {
             res.status(status).json({
                 status,
                 message,
+                total,
                 users: users.map(user => {
                     user.avatar = user.avatar ? `${req.config.app.url}${req.config.storage.pathMedias}/${user.avatar.filename}` : null
                     return user
