@@ -16,12 +16,11 @@ cd "project directory"
 npm start
 ```
 
-<br><br>
 Resources available for access via API:
 * [**Auth**](#reference/resources/auth)
 * [**Users**](#reference/resources/users)
 * [**Galleries**](#reference/resources/galleries)
-<br>
+
 ## Métodos
 API requests must follow the standards:
 | Method | Description |
@@ -30,8 +29,9 @@ API requests must follow the standards:
 | `POST` | Used to create a new record. |
 | `PUT` | Update record data or change its status. |
 | `DELETE` | Remove a system registry. |
-<br>
+
 ## Responses
+
 | Code | Description |
 |---|---|
 | `200` | Request executed successfully.|
@@ -45,7 +45,7 @@ API requests must follow the standards:
 | `410` | Searched record has been deleted from the system and is no longer available.|
 | `422` | Data entered is outside the scope defined for the field.|
 | `429` | Maximum number of requests reached. (*wait a few seconds and try again*)|
-<br>
+
 ## List
 Depending on which endpoint you are calling via GET, there may be more parameters available for fetching, but the default will always be this:
 The `list` actions allow sending the following parameters:
@@ -53,9 +53,9 @@ The `list` actions allow sending the following parameters:
 |---|---|---|
 | `skip(Optional)` | Informs the beginning of the listing (by default it starts with 0). | Integer |
 | `limit(Optional)` | Returned data limit (by default it starts with 10). | Integer |
-<br>
+
 ## Auth [/auth]
-<br>
+
 ### Login (/auth) [GET]
 | Param | Description | Type |
 |---|---|---|
@@ -82,7 +82,7 @@ The `list` actions allow sending the following parameters:
             }
 
 ## Users [/users]
-<br>
+
 ### List (/users) [GET]
 | Param | Description | Type |
 |---|---|---|
@@ -91,7 +91,7 @@ The `list` actions allow sending the following parameters:
 | `first_name(Optional)` | Firts name of user. | String |
 | `last_name(Optional)` | Last name of user. | String |
 | `email(Optional)` | Email name of user. | String |
-<br>
+
 + Request (application/json)
 
     + Headers
