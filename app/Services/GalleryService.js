@@ -2,6 +2,7 @@ const { Gallery, Media } = require('../Models/index')
 const bcrypt = require('bcryptjs')
 const ErrorUtil = require('../Util/Error')
 const StorageUtil = require('../Util/Storage')
+const StrUtil = require('../Util/Str')
 
 const endpoint = 'galleries/'
 
@@ -87,7 +88,7 @@ module.exports = {
         try{
             const gallery = new Gallery({
                 title:          data.title,
-                slug:           data.slug,
+                slug:           data.slug ? Str.slugify(data.slug) : '',
                 description:    data.description
             })
 
@@ -134,9 +135,9 @@ module.exports = {
                 Gallery.updateOne({
                     _id: gallery._id
                 }, {
-                    title:          data.title          || gallery.title,
-                    slug:           data.slug           || gallery.slug,
-                    description:    data.description    || gallery.description
+                    title:          data.title || gallery.title,
+                    slug:           data.slug ? Str.slugify(data.slug) : gallery.slug,
+                    description:    data.description || gallery.description
                 })
                 .then(response => {
                     const status = 200
