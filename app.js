@@ -14,7 +14,11 @@ fs.readdirSync(path.join(__dirname, 'config')).forEach(file => {
 })
 
 // Generate directories
-fs.mkdir(path.join(__dirname, config.storage.upload.destination, config.storage.pathMedias), (error) => {})
+fs.mkdir(path.join(__dirname, config.storage.upload.destination), (error) => {
+    if(error) return
+
+    fs.mkdir(path.join(__dirname, config.storage.upload.destination, config.storage.pathMedias), (error) => {})
+})
 
 // Instances
 const app = express()
@@ -32,6 +36,18 @@ mongoose.Promise = global.Promise
 mongoose.connect(`mongodb://${config.database.mongodb.host}:${config.database.mongodb.port}/${config.database.mongodb.name}`)
 .then(response => console.log('MongoDB Connected!'))
 .catch(error => console.log('MongoDB NOT Connected: ', error))
+
+// Cors
+app.use(async (req, res, next) => {
+    res.header('Content-Type', 'application/json')
+    res.header('Access-Control-Allow-Origins', '*')
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+    res.header('Access-Control-Allow-Credentials', 'true')
+    res.header('Cache-Control', 'no-cache, no-store, must-revalidate')
+    
+    next()
+})
 
 // Middlewares
 app.use(async (req, res, next) => {
@@ -60,10 +76,17 @@ app.use(async (error, req, res, next) => {
     const message = error.message || config['http-responses'].status[status]
     const errors = error.httpErrors || []
 
+    if(errors.length){
+        return res.status(status).json({
+            status,
+            message,
+            errors
+        })
+    }
+    
     res.status(status).json({
         status,
-        message,
-        errors
+        message
     })
 })
 

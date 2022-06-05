@@ -11,9 +11,15 @@
         "DATABASE_NAME": "gallery",
         "DATABASE_PORT": 27017,
 
+        "PAGINATE_SKIP": 0,
+        "PAGINATE_LIMIT": 10,
+
         "PASSWORD_HASH_SALT": 10,
 
         "JWT_KEY": "secret",
-        "JWT_EXPIRESIN": "30d"
+        "JWT_EXPIRESIN": "30d",
+
+        "STORAGE_UPLOAD_DESTINATION_PATH": "storage",
+        "STORAGE_UPLOAD_DESTINATION_PATH_MEDIAS": "medias"
     }
 }

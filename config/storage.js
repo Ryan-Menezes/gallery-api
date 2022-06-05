@@ -1,6 +1,6 @@
 module.exports = {
     upload: {
-        destination: 'storage'
+        destination: process.env.STORAGE_UPLOAD_DESTINATION_PATH
     },
-    pathMedias: 'medias'
+    pathMedias: process.env.STORAGE_UPLOAD_DESTINATION_PATH_MEDIAS
 }

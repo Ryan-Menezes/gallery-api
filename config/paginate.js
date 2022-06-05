@@ -1,4 +1,4 @@
 module.exports = {
-    skip: 0,
-    limit: 10
+    skip: process.env.PAGINATE_SKIP,
+    limit: process.env.PAGINATE_LIMIT
 }
