@@ -39,12 +39,12 @@ mongoose.connect(`mongodb://${config.database.mongodb.host}:${config.database.mo
 
 // Cors
 app.use(async (req, res, next) => {
-    res.header('Content-Type', 'application/json')
+    res.header('Content-Type', 'application/json; charset=utf-8')
+    res.header('Cache-Control', 'no-cache, no-store, must-revalidate')
     res.header('Access-Control-Allow-Origins', '*')
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
     res.header('Access-Control-Allow-Credentials', 'true')
-    res.header('Cache-Control', 'no-cache, no-store, must-revalidate')
     
     next()
 })
